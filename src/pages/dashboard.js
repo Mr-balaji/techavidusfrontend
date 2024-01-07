@@ -18,13 +18,12 @@ export const Dashboard = () => {
   const [productDetailsFilter, setProductDetailsFilter] = useState("");
   const [priceFilter, setPriceFilter] = useState("");
   const [quantityFilter, setQuantityFilter] = useState("");
-  const [createdAtFilter, setCreatedAtFilter] = useState("");
+  const [selectedDate, setSelectedDate] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [postImg, setPostImg] = useState(null);
 
   const [rowId, setRowId] = useState("");
 
-  console.log("rowId", rowId);
 
   const columns = [
     { field: "productName", header: "productName" },
@@ -70,18 +69,20 @@ export const Dashboard = () => {
   };
 
   const BindList = async () => {
+
     const requestBody = {
       productName: productNameFilter,
       productDetails: productDetailsFilter,
       price: priceFilter,
       quantity: quantityFilter,
-      createdAt: createdAtFilter,
+      createdAt: selectedDate,
       // Add other properties as needed
     };
     const resp = await axios.post(
       "http://localhost:5000/api/products/list",
       requestBody
     );
+    console.log("selectedDate",selectedDate);
 
     if (resp.data.responseStatus === "success") {
       setProductList(resp.data.responseData.products);
@@ -104,15 +105,7 @@ export const Dashboard = () => {
     );
   };
 
-  useEffect(() => {
-    BindList();
-  }, [
-    productNameFilter,
-    productDetailsFilter.priceFilter,
-    quantityFilter,
-    priceFilter,
-    loading,
-  ]);
+ 
 
   const onRowEditComplete = async (e) => {
     setLoading(true);
@@ -142,6 +135,21 @@ export const Dashboard = () => {
       />
     );
   };
+
+  const handleDateChange = (e) => {
+    const selectedDateValue = e;
+
+    if (selectedDateValue) {
+      // Subtract 1 day from the selected date
+      const modifiedDate = new Date(selectedDateValue);
+      modifiedDate.setDate(modifiedDate.getDate() + 1);
+    console.log('modifiedDate',modifiedDate);
+      // Now `modifiedDate` is 1 day before the selected date
+      const utcDateString = modifiedDate.toISOString();
+      // Continue with your logic (e.g., sending the modified date to the API)
+      setSelectedDate(utcDateString);
+    }
+  };
   const onFilterInputChange = (value, field) => {
     // Update the corresponding filter state based on the column field
     switch (field) {
@@ -158,7 +166,7 @@ export const Dashboard = () => {
         setQuantityFilter(value);
         break;
       case "createdAt":
-        setCreatedAtFilter(value);
+        handleDateChange(value)
         break;
       default:
         break;
@@ -307,6 +315,17 @@ export const Dashboard = () => {
       life: 3000,
     });
   };
+
+   useEffect(() => {
+    BindList();
+  }, [
+    productNameFilter,
+    productDetailsFilter.priceFilter,
+    quantityFilter,
+    priceFilter,
+    loading,
+    selectedDate
+  ]);
   return (
     <div className="card">
       <DataTable
